@@ -28,8 +28,7 @@
     border-bottom:1px solid transparent;
   }
   .topbar.docked{
-    background:rgba(5,14,23,.82);
-    backdrop-filter:blur(14px);
+    background:rgba(5,14,23,.94);
     border-bottom-color:rgba(242,233,226,.12);
   }
   .wordmark{
@@ -278,6 +277,20 @@
       <linearGradient id="roseCore" x1="0" y1="1" x2="0" y2="0">
         <stop offset="0%" stop-color="#5c1c2a"/><stop offset="100%" stop-color="#98383f"/>
       </linearGradient>
+      <radialGradient id="mistFarGrad">
+        <stop offset="0%" stop-color="#8fa9bd" stop-opacity=".5"/>
+        <stop offset="55%" stop-color="#8fa9bd" stop-opacity=".2"/>
+        <stop offset="100%" stop-color="#8fa9bd" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="mistNearGrad">
+        <stop offset="0%" stop-color="#cfe0ea" stop-opacity=".55"/>
+        <stop offset="55%" stop-color="#cfe0ea" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#cfe0ea" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="moonSoft">
+        <stop offset="0%" stop-color="#f5dfb8" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#f5dfb8" stop-opacity="0"/>
+      </radialGradient>
       <radialGradient id="dawnGlow">
         <stop offset="0%" stop-color="#ffcf9e" stop-opacity=".7"/>
         <stop offset="55%" stop-color="#f2a071" stop-opacity=".22"/>
@@ -296,12 +309,6 @@
         <stop offset="0%" stop-color="#123048"/>
         <stop offset="100%" stop-color="#050e17"/>
       </linearGradient>
-      <filter id="mistBlur" x="-40%" y="-160%" width="180%" height="420%">
-        <feGaussianBlur stdDeviation="34"/>
-      </filter>
-      <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
-        <feGaussianBlur stdDeviation="10"/>
-      </filter>
       <filter id="petalGlow" x="-90%" y="-90%" width="280%" height="280%">
         <feGaussianBlur stdDeviation="13" result="b"/>
         <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
@@ -320,8 +327,8 @@
       <circle cx="1310" cy="150" r="44" fill="#f5dfb8" opacity=".9"/>
     </g>
 
-    <g id="mistFar" filter="url(#mistBlur)" opacity=".28">
-      <ellipse cx="380" cy="520" rx="520" ry="52" fill="#8fa9bd" opacity=".5"/>
+    <g id="mistFar" opacity=".5">
+      <ellipse cx="380" cy="520" rx="620" ry="150" fill="url(#mistFarGrad)"/>
       <ellipse cx="1280" cy="640" rx="600" ry="46" fill="#8fa9bd" opacity=".36"/>
     </g>
 
@@ -336,8 +343,8 @@
     <!-- 세 공간을 통과하는 빛 -->
     <ellipse id="gate" cx="800" cy="400" rx="0" ry="0" fill="url(#wayGlow)" opacity="0"/>
 
-    <g id="mistNear" filter="url(#mistBlur)" opacity=".24">
-      <ellipse cx="700" cy="300" rx="700" ry="60" fill="#cfe0ea" opacity=".55"/>
+    <g id="mistNear" opacity=".45">
+      <ellipse cx="700" cy="300" rx="820" ry="170" fill="url(#mistNearGrad)"/>
     </g>
 
     <ellipse id="dawn" cx="800" cy="742" rx="1000" ry="300" fill="url(#dawnGlow)" opacity="0"/>
@@ -347,10 +354,10 @@
       <g id="reflection" opacity="0" clip-path="url(#belowSurface)"></g>
       <g id="ripples" fill="none" stroke-width="1.5" clip-path="url(#belowSurface)"></g>
       <path d="M-100 740 H1700" stroke="#9fc0d4" stroke-width="1" opacity=".4"/>
-      <ellipse id="moonPath" cx="1310" cy="782" rx="70" ry="46" fill="#f5dfb8" opacity="0" filter="url(#soft)"/>
+      <ellipse id="moonPath" cx="1310" cy="782" rx="70" ry="46" fill="url(#moonSoft)" opacity="0"/>
     </g>
 
-    <g id="petal" opacity="0" filter="url(#petalGlow)">
+    <g id="petal" opacity="0">
       <g transform="translate(0,148)">
         <use href="#petalShape" fill="url(#petalFill)"/>
         <path d="M0 -22 C 12 -104 12 -206 0 -270" fill="none" stroke="#ffffff" stroke-opacity=".22" stroke-width="2.5"/>
@@ -543,6 +550,8 @@
   "use strict";
   const NS = "http://www.w3.org/2000/svg";
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const LITE = matchMedia("(pointer: coarse)").matches || innerWidth < 860
+               || (navigator.hardwareConcurrency || 8) <= 4;
   const CX = 800, CY = 430, WATER = 740, LAND = 818;
   const el = id => document.getElementById(id);
 
@@ -585,7 +594,7 @@
     {count:5, offset:18, scale:0.38, href:"#petalCore2", fill:"url(#roseCore)",delay:.36, tilt:-10}
   ];
   let n = 0;
-  RINGS.forEach((ring,ri) => {
+  (LITE ? RINGS.slice(0,3) : RINGS).forEach((ring,ri) => {
     for(let i=0;i<ring.count;i++){
       const rot=document.createElementNS(NS,"g"), scl=document.createElementNS(NS,"g"), use=document.createElementNS(NS,"use");
       use.setAttribute("href",ring.href); use.setAttribute("fill",ring.fill);
@@ -612,7 +621,7 @@
   /* 이 한 장은 꽃 뒤에 그대로 두되, 여정에서 입을 옷만 미리 입혀둔다.
      그래야 인계되는 순간 색이나 질감이 바뀌지 않는다 */
   leaver.scl.firstChild.setAttribute("fill","url(#petalFill)");     // 같은 그라데이션
-  leaver.scl.setAttribute("filter","url(#petalGlow)");              // 같은 번짐
+  if(!LITE){ leaver.scl.setAttribute("filter","url(#petalGlow)"); }  // 같은 번짐 (저사양은 생략)
   [["M0 -22 C 12 -104 12 -206 0 -270","#ffffff",".22","2.5"],
    ["M0 -22 C -30 -96 -46 -170 -52 -226","#000000",".1","2"]].forEach(([d,c,o,w])=>{
     const v=document.createElementNS(NS,"path");
@@ -634,7 +643,7 @@
   }
 
   const motes=[];
-  for(let i=0;i<54;i++){
+  for(let i=0, N=(LITE?16:54); i<N; i++){
     const c=document.createElementNS(NS,"circle");
     c.setAttribute("r",(1+Math.random()*2.4).toFixed(2));
     c.setAttribute("fill","#e8dccd");
@@ -665,15 +674,21 @@
     {at:1,   top:hex("#2b3d5e"), bot:hex("#eaa47f")}   // 동이 튼다
   ];
   const TEXT_DAY=hex("#2e2028"), TEXT_NIGHT=hex("#f2e9e2");
+  let lastGrad="", lastInk="";
   function paintSky(p){
     let a=SKY[0], b=SKY[SKY.length-1];
     for(let i=0;i<SKY.length-1;i++){ if(p>=SKY[i].at&&p<=SKY[i+1].at){a=SKY[i];b=SKY[i+1];break;} }
     const t=map(p,a.at,b.at);
-    sky.style.background=`linear-gradient(${rgb(a.top,b.top,t)},${rgb(a.bot,b.bot,t)})`;
+    const grad=`linear-gradient(${rgb(a.top,b.top,t)},${rgb(a.bot,b.bot,t)})`;
+    if(grad!==lastGrad){ sky.style.background=grad; lastGrad=grad; }
     const tone=map(p,.30,.47);
     const c=[0,1,2].map(k=>Math.round(lerp(TEXT_DAY[k],TEXT_NIGHT[k],tone)));
-    const ink=`rgb(${c.join(",")})`, dim=`rgba(${c.join(",")},.62)`;
-    [stageEl,topbar].forEach(n=>{ n.style.setProperty("--ink",ink); n.style.setProperty("--dim",dim); });
+    const ink=`rgb(${c.join(",")})`;
+    if(ink!==lastInk){
+      lastInk=ink;
+      const dim=`rgba(${c.join(",")},.62)`;
+      [stageEl,topbar].forEach(n=>{ n.style.setProperty("--ink",ink); n.style.setProperty("--dim",dim); });
+    }
   }
 
   /* 꽃잎(=고객)이 공간을 지날 때마다 그 공간의 빛을 머금음 */
@@ -797,7 +812,7 @@
 
     mistFar.setAttribute("transform",`translate(${(-p*160).toFixed(1)},${(-p*420).toFixed(1)})`);
     mistNear.setAttribute("transform",`translate(${(p*260).toFixed(1)},${(520-p*1150).toFixed(1)})`);
-    mistNear.setAttribute("opacity",(band(p,.30,.44,.70,.86)*.28).toFixed(3));
+    mistNear.setAttribute("opacity",(band(p,.30,.44,.70,.86)*(LITE?.3:.45)).toFixed(3));
     moon.setAttribute("opacity",(Math.min(map(p,.56,.74),1-map(p,.90,1))*.95).toFixed(3));
 
     const wrap=1100;
@@ -815,7 +830,7 @@
     moonPath.setAttribute("opacity",(rise*.16*(1-map(p,.88,.98))).toFixed(3));
 
     const daybreak=easeOut(map(p,.90,1));
-    document.getElementById("dawn").setAttribute("opacity",(daybreak*rise).toFixed(3));
+    dawnEl.setAttribute("opacity",(daybreak*rise).toFixed(3));
     const impact=map(p,.86,1);
     rings.forEach((r,i)=>{
       const k=clamp((impact-i*.1)/.6,0,1);
@@ -837,6 +852,8 @@
   const hero=document.getElementById("hero"), topbar=document.getElementById("topbar");
   const stageEl=document.querySelector(".stage");
   const scene=document.querySelector(".scene");
+  if(!LITE) petal.setAttribute("filter","url(#petalGlow)");
+  const dawnEl=document.getElementById("dawn");
   scene.insertBefore(petal, flower);   // 꽃잎은 꽃 뒤에서 출발한다
   let petalFront=false;
   let target=0,current=0,ticking=false;
@@ -846,7 +863,10 @@
     topbar.classList.toggle("docked", target > .985);
     if(!ticking){ ticking=true; requestAnimationFrame(loop); }
   }
-  function loop(){
+  let lastT=0;
+  function loop(ts){
+    if(LITE && ts && ts-lastT < 32){ requestAnimationFrame(loop); return; }  // 저사양은 30fps로
+    lastT=ts||0;
     current+=(target-current)*(reduce?1:.085);
     if(Math.abs(target-current)<.0002){ current=target; ticking=false; }
     render(current);
